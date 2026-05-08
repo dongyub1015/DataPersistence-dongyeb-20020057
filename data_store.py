@@ -39,16 +39,37 @@ class JsonDataStore:
         os.replace(tmp, self._path)
 
     def create(self, record: dict) -> str:
-        ...
+        data = self._load()
+        record = dict(record)
+        record_id = record.get("id") or str(uuid.uuid4())
+        if record_id in data:
+            raise DuplicateKeyError(record_id)
+        record["id"] = record_id
+        record["created_at"] = _utc_now()
+        data[record_id] = record
+        self._save(data)
+        return record_id
 
     def read(self, record_id: str) -> dict | None:
-        ...
+        return self._load().get(record_id)
 
     def read_all(self) -> list[dict]:
-        ...
+        return list(self._load().values())
 
     def update(self, record_id: str, fields: dict) -> dict:
-        ...
+        data = self._load()
+        if record_id not in data:
+            raise RecordNotFoundError(record_id)
+        safe_fields = {k: v for k, v in fields.items() if k != "id"}
+        data[record_id].update(safe_fields)
+        data[record_id]["updated_at"] = _utc_now()
+        self._save(data)
+        return dict(data[record_id])
 
     def delete(self, record_id: str) -> bool:
-        ...
+        data = self._load()
+        if record_id not in data:
+            raise RecordNotFoundError(record_id)
+        del data[record_id]
+        self._save(data)
+        return True
