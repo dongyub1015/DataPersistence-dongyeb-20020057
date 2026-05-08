@@ -1,0 +1,9 @@
+data.json
+data.json.bak
+data.json.tmp
+__pycache__/
+*.py[cod]
+.venv/
+htmlcov/
+.coverage
+.pytest_cache/
